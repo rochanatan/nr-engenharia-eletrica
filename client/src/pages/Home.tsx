@@ -1,7 +1,66 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Zap, Shield, FileCheck, Wrench, Users, Award, CheckCircle, ArrowRight, Phone, Mail, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// Componente de Contador Animado
+function AnimatedCounter({ end, duration = 2000, prefix = "", suffix = "" }: { end: number | string; duration?: number; prefix?: string; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const hasAnimated = useRef(false);
+
+  // Converter string para número (ex: "1,550" -> 1550, "2.5M" -> 2.5)
+  const parseValue = (val: number | string): number => {
+    if (typeof val === "number") return val;
+    const numStr = val.toString().replace(/[,M]/g, "");
+    return parseFloat(numStr);
+  };
+
+  const endNum = parseValue(end);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          let startTime: number;
+          const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            setCount(Math.floor(endNum * progress));
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setCount(endNum);
+            }
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [endNum, duration]);
+
+  // Formatar o número com vírgulas se necessário
+  const formatNumber = (num: number): string => {
+    if (typeof end === "string" && end.includes(",")) {
+      return num.toLocaleString("pt-BR");
+    }
+    return num.toString();
+  };
+
+  return (
+    <div ref={ref} className="text-center">
+      <div className="text-5xl md:text-6xl font-bold text-white mb-2">
+        {prefix}{formatNumber(count)}{suffix}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [activeService, setActiveService] = useState(0);
@@ -165,6 +224,47 @@ export default function Home() {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-24 md:py-32 bg-gradient-to-r from-gray-900 to-gray-800 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <img 
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663451646058/G3bHYcfuHMWRjKR4XT75Sa/hero-nr-professional-A5C39rXyUK4hVYEEEqDGun.webp"
+            alt="Background"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="container relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Nossos Números Alcançados!</h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Resultados comprovados de excelência e dedicação em cada projeto
+            </p>
+          </div>
+          <div className="grid md:grid-cols-5 gap-8">
+            <div className="text-center">
+              <AnimatedCounter end={26} prefix="+" />
+              <p className="text-lg text-gray-300 mt-4">Anos de Experiência</p>
+            </div>
+            <div className="text-center">
+              <AnimatedCounter end={560} prefix="+" />
+              <p className="text-lg text-gray-300 mt-4">Clientes Atendidos</p>
+            </div>
+            <div className="text-center">
+              <AnimatedCounter end="1,550" prefix="+" />
+              <p className="text-lg text-gray-300 mt-4">Escopos Realizados</p>
+            </div>
+            <div className="text-center">
+              <AnimatedCounter end={750} prefix="+" />
+              <p className="text-lg text-gray-300 mt-4">MVA Projetados</p>
+            </div>
+            <div className="text-center">
+              <AnimatedCounter end="2.5" suffix="M" />
+              <p className="text-lg text-gray-300 mt-4">m² Projetados</p>
+            </div>
           </div>
         </div>
       </section>
